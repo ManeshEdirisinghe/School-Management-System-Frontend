@@ -1,12 +1,24 @@
+import { useEffect, useState } from "react";
+import axios from "axios"; // Data ගෙන්නගන්න මෙයා ඕනේ
 import Sidebar from "../components/Sidebar";
 
 function Students() {
-  // දැනට බොරු Data ටිකක් (පස්සේ Database එකෙන් ගමු)
-  const students = [
-    { id: 1, name: "Kasun Perera", age: 16, grade: "10-A" },
-    { id: 2, name: "Nethmi De Silva", age: 15, grade: "9-B" },
-    { id: 3, name: "Sithija Alwis", age: 17, grade: "11-C" },
-  ];
+  const [students, setStudents] = useState([]);
+
+  // Page එක Load වෙද්දිම Data ගෙන්නගන්න
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  const loadStudents = async () => {
+    try {
+      // Backend එකෙන් Data ඉල්ලනවා (URL එක හරියට බලන්න)
+      const result = await axios.get("http://localhost:8080/api/v1/student/getAll");
+      setStudents(result.data);
+    } catch (error) {
+      console.error("Error loading students:", error);
+    }
+  };
 
   return (
     <div className="flex">
@@ -27,18 +39,17 @@ function Students() {
               <tr>
                 <th className="py-3 px-4 text-left">ID</th>
                 <th className="py-3 px-4 text-left">Name</th>
-                <th className="py-3 px-4 text-left">Age</th>
-                <th className="py-3 px-4 text-left">Grade</th>
+                <th className="py-3 px-4 text-left">Address</th>
                 <th className="py-3 px-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="text-gray-700">
-              {students.map((student) => (
-                <tr key={student.id} className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">{student.id}</td>
-                  <td className="py-3 px-4 font-medium">{student.name}</td>
-                  <td className="py-3 px-4">{student.age}</td>
-                  <td className="py-3 px-4 text-blue-600 font-bold">{student.grade}</td>
+              {students.map((student, index) => (
+                <tr key={index} className="border-b hover:bg-gray-50">
+                  <td className="py-3 px-4">{student.studentId}</td>
+                  {/* ඔයාගේ DTO එකේ තියෙන නම් හරියටම මෙතනට දාන්න */}
+                  <td className="py-3 px-4 font-medium">{student.studentName}</td>
+                  <td className="py-3 px-4">{student.studentAddress}</td> 
                   <td className="py-3 px-4 text-center">
                     <button className="text-green-600 hover:underline mr-3">Edit</button>
                     <button className="text-red-600 hover:underline">Delete</button>
@@ -47,6 +58,11 @@ function Students() {
               ))}
             </tbody>
           </table>
+          
+          {/* Data නැත්නම් පෙන්නන්න පණිවිඩයක් */}
+          {students.length === 0 && (
+            <p className="text-center p-5 text-gray-500">No students found yet.</p>
+          )}
         </div>
 
       </div>
