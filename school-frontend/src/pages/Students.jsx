@@ -24,7 +24,7 @@ function Students() {
     <div className="flex">
       <Sidebar />
       <div className="flex-1 ml-64 p-10 bg-gray-100 min-h-screen">
-        
+
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">🎓 Student Management</h1>
           <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
@@ -46,10 +46,17 @@ function Students() {
             <tbody className="text-gray-700">
               {students.map((student, index) => (
                 <tr key={index} className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">{student.studentId}</td>
-                  {/* ඔයාගේ DTO එකේ තියෙන නම් හරියටම මෙතනට දාන්න */}
-                  <td className="py-3 px-4 font-medium">{student.studentName}</td>
-                  <td className="py-3 px-4">{student.studentAddress}</td> 
+                  {/* 1. ID එක */}
+                  <td className="py-3 px-4">{student.studentId || student.id}</td>
+
+                  {/* 2. Name එක (First Name සහ Last Name එකතු කරලා) */}
+                  <td className="py-3 px-4 font-medium">
+                    {student.firstName} {student.lastName}
+                  </td>
+
+                  {/* 3. Address එක */}
+                  <td className="py-3 px-4">{student.address}</td>
+
                   <td className="py-3 px-4 text-center">
                     <button className="text-green-600 hover:underline mr-3">Edit</button>
                     <button className="text-red-600 hover:underline">Delete</button>
@@ -58,7 +65,7 @@ function Students() {
               ))}
             </tbody>
           </table>
-          
+
           {/* Data නැත්නම් පෙන්නන්න පණිවිඩයක් */}
           {students.length === 0 && (
             <p className="text-center p-5 text-gray-500">No students found yet.</p>
