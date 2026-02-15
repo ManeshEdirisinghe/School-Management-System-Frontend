@@ -4,8 +4,8 @@ import { FaHome, FaUserGraduate, FaChalkboardTeacher, FaSchool, FaSignOutAlt } f
 function Sidebar() {
   return (
     <div className="w-64 h-screen bg-gray-800 text-white fixed top-0 left-0 flex flex-col shadow-lg">
-      <div className="p-6 text-center text-2xl font-bold border-b border-gray-700 bg-gray-900">
-        SMS System 🎓
+      <div className="p-6 text-center text-2xl font-bold border-b border-gray-700 bg-gray-900 flex items-center justify-center gap-2">
+        <FaUserGraduate /> SMS System
       </div>
       
       <nav className="flex-1 p-4 space-y-2 mt-4">
