@@ -1,18 +1,7 @@
 import Sidebar from "../components/Sidebar";
-import { useState } from "react";
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaEnvelope, FaPhone, FaChalkboardTeacher } from "react-icons/fa";
-
-// ─── Mock Data ───────────────────────────────────────────────
-const mockTeachers = [
-  { id: "TCH-001", name: "Mr. Nimal Rajapaksa", subject: "Mathematics", phone: "071-2345678", email: "nimal@school.lk", status: "Active", classes: 5 },
-  { id: "TCH-002", name: "Mrs. Kumari Jayasuriya", subject: "Science", phone: "077-8765432", email: "kumari@school.lk", status: "Active", classes: 4 },
-  { id: "TCH-003", name: "Mr. Sunil Perera", subject: "English", phone: "076-1112233", email: "sunil@school.lk", status: "On Leave", classes: 3 },
-  { id: "TCH-004", name: "Mrs. Anoma Silva", subject: "Sinhala", phone: "078-4455667", email: "anoma@school.lk", status: "Active", classes: 6 },
-  { id: "TCH-005", name: "Mr. Rohan Bandara", subject: "History", phone: "070-9988776", email: "rohan@school.lk", status: "Active", classes: 4 },
-  { id: "TCH-006", name: "Mrs. Dilani Fernando", subject: "ICT", phone: "071-5566778", email: "dilani@school.lk", status: "Active", classes: 5 },
-  { id: "TCH-007", name: "Mr. Chaminda Wijesinghe", subject: "Art", phone: "077-3344556", email: "chaminda@school.lk", status: "Inactive", classes: 0 },
-  { id: "TCH-008", name: "Mrs. Priyanka Herath", subject: "Music", phone: "076-6677889", email: "priyanka@school.lk", status: "Active", classes: 3 },
-];
+import { useState, useEffect } from "react";
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaEnvelope, FaPhone, FaChalkboardTeacher, FaSpinner, FaExclamationTriangle } from "react-icons/fa";
+import api, { endpoints } from "../services/api";
 
 const statusBadge = {
   Active: "bg-green-100 text-green-700",
@@ -21,9 +10,30 @@ const statusBadge = {
 };
 
 function Teachers() {
+  const [teachers, setTeachers] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const filtered = mockTeachers.filter(
+  useEffect(() => {
+    loadTeachers();
+  }, []);
+
+  const loadTeachers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await api.get(endpoints.teachers.getAll);
+      setTeachers(result.data);
+    } catch (error) {
+      console.error("Error loading teachers:", error);
+      setError("Failed to load teachers. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtered = teachers.filter(
     (t) =>
       t.name.toLowerCase().includes(search.toLowerCase()) ||
       t.subject.toLowerCase().includes(search.toLowerCase())
@@ -37,7 +47,7 @@ function Teachers() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3"><FaChalkboardTeacher className="text-green-500" /> Teacher Management</h1>
-            <p className="text-gray-500 mt-1">{mockTeachers.length} teachers registered</p>
+            <p className="text-gray-500 mt-1">{teachers.length} teachers registered</p>
           </div>
           <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition font-semibold shadow">
             <FaPlus /> Add Teacher
@@ -56,7 +66,34 @@ function Teachers() {
           />
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl shadow-md p-12 flex flex-col items-center justify-center">
+            <FaSpinner className="text-green-500 text-4xl animate-spin mb-4" />
+            <p className="text-gray-600 font-medium">Loading teachers...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4">
+            <FaExclamationTriangle className="text-red-500 text-2xl flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-red-800 font-semibold mb-1">Error Loading Teachers</h3>
+              <p className="text-red-600 text-sm mb-3">{error}</p>
+              <button 
+                onClick={loadTeachers}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Teacher Cards Grid */}
+        {!loading && !error && (
+        <>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filtered.map((t) => (
             <div key={t.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition p-6">
@@ -91,6 +128,8 @@ function Teachers() {
 
         {filtered.length === 0 && (
           <p className="text-center p-10 text-gray-500">No teachers found matching your search.</p>
+        )}
+        </>
         )}
       </div>
     </div>
