@@ -1,21 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Sidebar from "../components/Sidebar";
-import { FaUserGraduate, FaSearch, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
-
-// ─── Mock Data ───────────────────────────────────────────────
-const mockStudents = [
-  { id: "STU-1001", firstName: "Kasun", lastName: "Perera", address: "123 Galle Road, Colombo 03", grade: "Grade 10 - A", phone: "071-1234567", status: "Active" },
-  { id: "STU-1002", firstName: "Nimali", lastName: "Fernando", address: "45 Kandy Road, Peradeniya", grade: "Grade 11 - B", phone: "077-2345678", status: "Active" },
-  { id: "STU-1003", firstName: "Amal", lastName: "Silva", address: "78 Main Street, Matara", grade: "Grade 9 - C", phone: "076-3456789", status: "Inactive" },
-  { id: "STU-1004", firstName: "Dilini", lastName: "Jayawardena", address: "12 Temple Road, Kurunegala", grade: "Grade 12 - A", phone: "078-4567890", status: "Active" },
-  { id: "STU-1005", firstName: "Ruwan", lastName: "Bandara", address: "90 Lake Drive, Anuradhapura", grade: "Grade 8 - B", phone: "070-5678901", status: "Active" },
-  { id: "STU-1006", firstName: "Sachini", lastName: "Dissanayake", address: "34 Hill Street, Nuwara Eliya", grade: "Grade 10 - B", phone: "071-6789012", status: "Active" },
-  { id: "STU-1007", firstName: "Tharindu", lastName: "Wickramasinghe", address: "56 Beach Road, Negombo", grade: "Grade 11 - A", phone: "077-7890123", status: "On Leave" },
-  { id: "STU-1008", firstName: "Hiruni", lastName: "Rathnayake", address: "21 Park Avenue, Gampaha", grade: "Grade 7 - A", phone: "076-8901234", status: "Active" },
-  { id: "STU-1009", firstName: "Sandun", lastName: "Karunaratne", address: "67 Station Road, Badulla", grade: "Grade 9 - A", phone: "078-9012345", status: "Active" },
-  { id: "STU-1010", firstName: "Maleesha", lastName: "Gunasekara", address: "88 River Lane, Ratnapura", grade: "Grade 12 - B", phone: "070-0123456", status: "Inactive" },
-];
+import { FaUserGraduate, FaSearch, FaPlus, FaEdit, FaTrash, FaSpinner, FaExclamationTriangle } from "react-icons/fa";
+import api, { endpoints } from "../services/api";
 
 const statusBadge = {
   Active: "bg-green-100 text-green-700",
@@ -24,22 +10,28 @@ const statusBadge = {
 };
 
 function Students() {
-  const [students, setStudents] = useState(mockStudents);
+  const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Uncomment below to fetch from backend instead of using mock data
-  // useEffect(() => {
-  //   loadStudents();
-  // }, []);
-  //
-  // const loadStudents = async () => {
-  //   try {
-  //     const result = await axios.get("http://localhost:8080/api/v1/student/getAll");
-  //     setStudents(result.data);
-  //   } catch (error) {
-  //     console.error("Error loading students:", error);
-  //   }
-  // };
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  const loadStudents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await api.get(endpoints.students.getAll);
+      setStudents(result.data);
+    } catch (error) {
+      console.error("Error loading students:", error);
+      setError("Failed to load students. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = students.filter(
     (s) =>
@@ -79,7 +71,33 @@ function Students() {
           />
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl shadow-md p-12 flex flex-col items-center justify-center">
+            <FaSpinner className="text-blue-500 text-4xl animate-spin mb-4" />
+            <p className="text-gray-600 font-medium">Loading students...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4">
+            <FaExclamationTriangle className="text-red-500 text-2xl flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-red-800 font-semibold mb-1">Error Loading Students</h3>
+              <p className="text-red-600 text-sm mb-3">{error}</p>
+              <button 
+                onClick={loadStudents}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Student Table */}
+        {!loading && !error && (
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           <table className="min-w-full">
             <thead className="bg-gray-800 text-white">
@@ -125,6 +143,7 @@ function Students() {
             <p className="text-center p-8 text-gray-500">No students found matching your search.</p>
           )}
         </div>
+        )}
 
       </div>
     </div>
