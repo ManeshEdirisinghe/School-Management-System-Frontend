@@ -1,4 +1,5 @@
 import Sidebar from "../components/Sidebar";
+import { useState, useEffect } from "react";
 import {
   FaUserGraduate,
   FaChalkboardTeacher,
@@ -11,16 +12,12 @@ import {
   FaChartBar,
   FaClock,
   FaMoneyBillWave,
+  FaSpinner,
+  FaExclamationTriangle,
 } from "react-icons/fa";
+import api, { endpoints } from "../services/api";
 
 // ─── Mock Data ───────────────────────────────────────────────
-const stats = [
-  { title: "Total Students", value: "1,240", change: "+12%", up: true, icon: <FaUserGraduate />, color: "blue" },
-  { title: "Total Teachers", value: "86", change: "+3%", up: true, icon: <FaChalkboardTeacher />, color: "green" },
-  { title: "Active Classes", value: "42", change: "+5%", up: true, icon: <FaSchool />, color: "purple" },
-  { title: "Revenue (LKR)", value: "2.4M", change: "-2%", up: false, icon: <FaDollarSign />, color: "orange" },
-];
-
 const colorMap = {
   blue: { bg: "bg-blue-100", text: "text-blue-600", border: "border-blue-500" },
   green: { bg: "bg-green-100", text: "text-green-600", border: "border-green-500" },
@@ -75,6 +72,65 @@ const activityIcon = {
 
 // ─── Component ───────────────────────────────────────────────
 function Dashboard() {
+  const [stats, setStats] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [errorStats, setErrorStats] = useState(null);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      setLoadingStats(true);
+      setErrorStats(null);
+      const result = await api.get(endpoints.dashboard.getStats);
+      
+      // Transform API data to match component structure
+      const statsData = [
+        { 
+          title: "Total Students", 
+          value: result.data.totalStudents?.toString() || "0", 
+          change: result.data.studentsChange || "+0%", 
+          up: result.data.studentsChange?.startsWith("+") || false, 
+          icon: <FaUserGraduate />, 
+          color: "blue" 
+        },
+        { 
+          title: "Total Teachers", 
+          value: result.data.totalTeachers?.toString() || "0", 
+          change: result.data.teachersChange || "+0%", 
+          up: result.data.teachersChange?.startsWith("+") || false, 
+          icon: <FaChalkboardTeacher />, 
+          color: "green" 
+        },
+        { 
+          title: "Active Classes", 
+          value: result.data.activeClasses?.toString() || "0", 
+          change: result.data.classesChange || "+0%", 
+          up: result.data.classesChange?.startsWith("+") || false, 
+          icon: <FaSchool />, 
+          color: "purple" 
+        },
+        { 
+          title: "Revenue (LKR)", 
+          value: result.data.revenue || "0", 
+          change: result.data.revenueChange || "+0%", 
+          up: result.data.revenueChange?.startsWith("+") || false, 
+          icon: <FaDollarSign />, 
+          color: "orange" 
+        },
+      ];
+      
+      setStats(statsData);
+    } catch (error) {
+      console.error("Error loading dashboard stats:", error);
+      setErrorStats("Failed to load statistics. Please try again later.");
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   return (
     <div className="flex">
       <Sidebar />
@@ -99,7 +155,36 @@ function Dashboard() {
           </div>
         </header>
 
+        {/* Loading State for Stats */}
+        {loadingStats && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white p-6 rounded-xl shadow-md flex items-center justify-center" style={{ height: "140px" }}>
+                <FaSpinner className="text-blue-500 text-3xl animate-spin" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Error State for Stats */}
+        {errorStats && !loadingStats && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-8 flex items-start gap-4">
+            <FaExclamationTriangle className="text-red-500 text-2xl flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-red-800 font-semibold mb-1">Error Loading Statistics</h3>
+              <p className="text-red-600 text-sm mb-3">{errorStats}</p>
+              <button 
+                onClick={loadStats}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Stat Cards */}
+        {!loadingStats && !errorStats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((s, i) => {
             const c = colorMap[s.color];
@@ -121,6 +206,7 @@ function Dashboard() {
             );
           })}
         </div>
+        )}
 
         {/* Middle Row — Attendance Chart + Upcoming Events */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
