@@ -1,18 +1,7 @@
 import Sidebar from "../components/Sidebar";
-import { useState } from "react";
-import { FaSearch, FaPlus, FaUserGraduate, FaChalkboardTeacher, FaClock, FaSchool } from "react-icons/fa";
-
-// ─── Mock Data ───────────────────────────────────────────────
-const mockClasses = [
-  { id: "CLS-001", name: "Grade 6 - A", teacher: "Mrs. Kumari Jayasuriya", subject: "Science", students: 38, schedule: "Mon, Wed, Fri - 8:00 AM", room: "Room 101", status: "Active" },
-  { id: "CLS-002", name: "Grade 7 - B", teacher: "Mr. Nimal Rajapaksa", subject: "Mathematics", students: 35, schedule: "Tue, Thu - 9:00 AM", room: "Room 205", status: "Active" },
-  { id: "CLS-003", name: "Grade 8 - A", teacher: "Mr. Sunil Perera", subject: "English", students: 40, schedule: "Mon, Wed - 10:00 AM", room: "Room 302", status: "Active" },
-  { id: "CLS-004", name: "Grade 9 - C", teacher: "Mrs. Anoma Silva", subject: "Sinhala", students: 32, schedule: "Tue, Thu, Fri - 11:00 AM", room: "Room 110", status: "Suspended" },
-  { id: "CLS-005", name: "Grade 10 - A", teacher: "Mr. Rohan Bandara", subject: "History", students: 36, schedule: "Mon, Wed, Fri - 1:00 PM", room: "Room 401", status: "Active" },
-  { id: "CLS-006", name: "Grade 11 - B", teacher: "Mrs. Dilani Fernando", subject: "ICT", students: 28, schedule: "Tue, Thu - 2:00 PM", room: "Lab 01", status: "Active" },
-  { id: "CLS-007", name: "Grade 12 - A", teacher: "Mrs. Priyanka Herath", subject: "Music", students: 20, schedule: "Fri - 3:00 PM", room: "Music Hall", status: "Active" },
-  { id: "CLS-008", name: "Grade 10 - B", teacher: "Mr. Chaminda Wijesinghe", subject: "Art", students: 25, schedule: "Wed - 2:00 PM", room: "Art Room", status: "Completed" },
-];
+import { useState, useEffect } from "react";
+import { FaSearch, FaPlus, FaUserGraduate, FaChalkboardTeacher, FaClock, FaSchool, FaSpinner, FaExclamationTriangle } from "react-icons/fa";
+import api, { endpoints } from "../services/api";
 
 const statusBadge = {
   Active: "bg-green-100 text-green-700",
@@ -21,17 +10,38 @@ const statusBadge = {
 };
 
 function Classes() {
+  const [classes, setClasses] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const filtered = mockClasses.filter(
+  useEffect(() => {
+    loadClasses();
+  }, []);
+
+  const loadClasses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await api.get(endpoints.classes.getAll);
+      setClasses(result.data);
+    } catch (error) {
+      console.error("Error loading classes:", error);
+      setError("Failed to load classes. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtered = classes.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.teacher.toLowerCase().includes(search.toLowerCase()) ||
       c.subject.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalStudents = mockClasses.reduce((sum, c) => sum + c.students, 0);
-  const activeClasses = mockClasses.filter((c) => c.status === "Active").length;
+  const totalStudents = classes.reduce((sum, c) => sum + c.students, 0);
+  const activeClasses = classes.filter((c) => c.status === "Active").length;
 
   return (
     <div className="flex">
@@ -41,7 +51,7 @@ function Classes() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3"><FaSchool className="text-purple-500" /> Class Management</h1>
-            <p className="text-gray-500 mt-1">{mockClasses.length} classes &middot; {totalStudents} students &middot; {activeClasses} active</p>
+            <p className="text-gray-500 mt-1">{classes.length} classes &middot; {totalStudents} students &middot; {activeClasses} active</p>
           </div>
           <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition font-semibold shadow">
             <FaPlus /> Add Class
@@ -60,7 +70,33 @@ function Classes() {
           />
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl shadow-md p-12 flex flex-col items-center justify-center">
+            <FaSpinner className="text-purple-500 text-4xl animate-spin mb-4" />
+            <p className="text-gray-600 font-medium">Loading classes...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4">
+            <FaExclamationTriangle className="text-red-500 text-2xl flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-red-800 font-semibold mb-1">Error Loading Classes</h3>
+              <p className="text-red-600 text-sm mb-3">{error}</p>
+              <button 
+                onClick={loadClasses}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Table */}
+        {!loading && !error && (
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           <table className="min-w-full">
             <thead className="bg-gray-800 text-white">
@@ -113,6 +149,7 @@ function Classes() {
             <p className="text-center p-8 text-gray-500">No classes found matching your search.</p>
           )}
         </div>
+        )}
       </div>
     </div>
   );
