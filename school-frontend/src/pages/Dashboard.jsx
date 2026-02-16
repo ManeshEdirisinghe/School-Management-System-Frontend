@@ -25,14 +25,6 @@ const colorMap = {
   orange: { bg: "bg-orange-100", text: "text-orange-600", border: "border-orange-500" },
 };
 
-const recentStudents = [
-  { id: "STU-1001", name: "Kasun Perera", grade: "Grade 10 - A", date: "2026-02-10", status: "Active" },
-  { id: "STU-1002", name: "Nimali Fernando", grade: "Grade 11 - B", date: "2026-02-09", status: "Active" },
-  { id: "STU-1003", name: "Amal Silva", grade: "Grade 9 - C", date: "2026-02-08", status: "Inactive" },
-  { id: "STU-1004", name: "Dilini Jayawardena", grade: "Grade 12 - A", date: "2026-02-07", status: "Active" },
-  { id: "STU-1005", name: "Ruwan Bandara", grade: "Grade 8 - B", date: "2026-02-06", status: "Active" },
-];
-
 const recentActivities = [
   { text: "New student Kasun Perera enrolled in Grade 10 - A", time: "2 hours ago", type: "student" },
   { text: "Teacher Nimal Rajapaksa updated Grade 11 - B marks", time: "4 hours ago", type: "teacher" },
@@ -75,9 +67,14 @@ function Dashboard() {
   const [stats, setStats] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [errorStats, setErrorStats] = useState(null);
+  
+  const [recentStudents, setRecentStudents] = useState([]);
+  const [loadingRecentStudents, setLoadingRecentStudents] = useState(true);
+  const [errorRecentStudents, setErrorRecentStudents] = useState(null);
 
   useEffect(() => {
     loadStats();
+    loadRecentStudents();
   }, []);
 
   const loadStats = async () => {
@@ -128,6 +125,20 @@ function Dashboard() {
       setErrorStats("Failed to load statistics. Please try again later.");
     } finally {
       setLoadingStats(false);
+    }
+  };
+
+  const loadRecentStudents = async () => {
+    try {
+      setLoadingRecentStudents(true);
+      setErrorRecentStudents(null);
+      const result = await api.get(endpoints.dashboard.getRecentStudents);
+      setRecentStudents(result.data);
+    } catch (error) {
+      console.error("Error loading recent students:", error);
+      setErrorRecentStudents("Failed to load recent students. Please try again later.");
+    } finally {
+      setLoadingRecentStudents(false);
     }
   };
 
@@ -256,6 +267,33 @@ function Dashboard() {
             <div className="p-6 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-700 flex items-center gap-2"><FaUserGraduate className="text-blue-500" /> Recently Enrolled Students</h2>
             </div>
+            
+            {/* Loading State */}
+            {loadingRecentStudents && (
+              <div className="p-12 flex flex-col items-center justify-center">
+                <FaSpinner className="text-blue-500 text-3xl animate-spin mb-4" />
+                <p className="text-gray-600 text-sm">Loading recent students...</p>
+              </div>
+            )}
+            
+            {/* Error State */}
+            {errorRecentStudents && !loadingRecentStudents && (
+              <div className="p-6 flex items-start gap-4">
+                <FaExclamationTriangle className="text-red-500 text-xl flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="text-red-600 text-sm mb-3">{errorRecentStudents}</p>
+                  <button 
+                    onClick={loadRecentStudents}
+                    className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition text-sm font-medium"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Data Table */}
+            {!loadingRecentStudents && !errorRecentStudents && (
             <table className="min-w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -267,25 +305,34 @@ function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {recentStudents.map((st, i) => (
-                  <tr key={i} className="hover:bg-gray-50 transition">
-                    <td className="py-3 px-5 text-sm text-gray-600 font-mono">{st.id}</td>
-                    <td className="py-3 px-5 text-sm font-medium text-gray-800">{st.name}</td>
-                    <td className="py-3 px-5 text-sm text-gray-600">{st.grade}</td>
-                    <td className="py-3 px-5 text-sm text-gray-500">{st.date}</td>
-                    <td className="py-3 px-5 text-center">
-                      <span
-                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                          st.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {st.status}
-                      </span>
+                {recentStudents.length > 0 ? (
+                  recentStudents.map((st, i) => (
+                    <tr key={i} className="hover:bg-gray-50 transition">
+                      <td className="py-3 px-5 text-sm text-gray-600 font-mono">{st.id}</td>
+                      <td className="py-3 px-5 text-sm font-medium text-gray-800">{st.name}</td>
+                      <td className="py-3 px-5 text-sm text-gray-600">{st.grade}</td>
+                      <td className="py-3 px-5 text-sm text-gray-500">{st.date}</td>
+                      <td className="py-3 px-5 text-center">
+                        <span
+                          className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                            st.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {st.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-gray-500 text-sm">
+                      No recent students enrolled.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
+            )}
           </div>
 
           {/* Activity Feed */}
