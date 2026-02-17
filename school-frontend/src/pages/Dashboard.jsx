@@ -24,22 +24,6 @@ const colorMap = {
   orange: { bg: "bg-orange-100", text: "text-orange-600", border: "border-orange-500" },
 };
 
-const recentActivities = [
-  { text: "New student Kasun Perera enrolled in Grade 10 - A", time: "2 hours ago", type: "student" },
-  { text: "Teacher Nimal Rajapaksa updated Grade 11 - B marks", time: "4 hours ago", type: "teacher" },
-  { text: "Class Grade 9 - C schedule was modified", time: "6 hours ago", type: "class" },
-  { text: "Fee payment of LKR 25,000 received from STU-1002", time: "8 hours ago", type: "payment" },
-  { text: "New teacher Mrs. Kumari joined Mathematics dept.", time: "1 day ago", type: "teacher" },
-  { text: "Annual exam timetable published for Term 2", time: "1 day ago", type: "class" },
-];
-
-const upcomingEvents = [
-  { title: "Parent-Teacher Meeting", date: "Feb 15, 2026", tag: "Meeting" },
-  { title: "Term 2 Examinations Begin", date: "Feb 20, 2026", tag: "Exam" },
-  { title: "Science Fair", date: "Mar 01, 2026", tag: "Event" },
-  { title: "Sports Day", date: "Mar 10, 2026", tag: "Event" },
-];
-
 const attendanceData = [
   { day: "Mon", percent: 92 },
   { day: "Tue", percent: 88 },
@@ -69,10 +53,20 @@ function Dashboard() {
   const [recentStudents, setRecentStudents] = useState([]);
   const [loadingRecentStudents, setLoadingRecentStudents] = useState(true);
   const [errorRecentStudents, setErrorRecentStudents] = useState(null);
+  
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [loadingActivities, setLoadingActivities] = useState(true);
+  const [errorActivities, setErrorActivities] = useState(null);
+  
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [errorEvents, setErrorEvents] = useState(null);
 
   useEffect(() => {
     loadStats();
     loadRecentStudents();
+    loadRecentActivities();
+    loadUpcomingEvents();
   }, []);
 
   const loadStats = async () => {
@@ -136,6 +130,34 @@ function Dashboard() {
       setErrorRecentStudents("Failed to load recent students. Please try again later.");
     } finally {
       setLoadingRecentStudents(false);
+    }
+  };
+
+  const loadRecentActivities = async () => {
+    try {
+      setLoadingActivities(true);
+      setErrorActivities(null);
+      const result = await api.get(endpoints.dashboard.getActivities);
+      setRecentActivities(result.data);
+    } catch (error) {
+      console.error("Error loading recent activities:", error);
+      setErrorActivities("Failed to load recent activities. Please try again later.");
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
+  const loadUpcomingEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      setErrorEvents(null);
+      const result = await api.get(endpoints.dashboard.getEvents);
+      setUpcomingEvents(result.data);
+    } catch (error) {
+      console.error("Error loading upcoming events:", error);
+      setErrorEvents("Failed to load upcoming events. Please try again later.");
+    } finally {
+      setLoadingEvents(false);
     }
   };
 
@@ -240,20 +262,52 @@ function Dashboard() {
             <h2 className="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
               <FaCalendarAlt className="text-blue-500" /> Upcoming Events
             </h2>
+            
+            {/* Loading State */}
+            {loadingEvents && (
+              <div className="flex flex-col items-center justify-center py-8">
+                <FaSpinner className="text-blue-500 text-2xl animate-spin mb-3" />
+                <p className="text-gray-600 text-sm">Loading events...</p>
+              </div>
+            )}
+            
+            {/* Error State */}
+            {errorEvents && !loadingEvents && (
+              <div className="flex items-start gap-3 py-4">
+                <FaExclamationTriangle className="text-red-500 text-lg flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="text-red-600 text-sm mb-2">{errorEvents}</p>
+                  <button 
+                    onClick={loadUpcomingEvents}
+                    className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition text-xs font-medium"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Data */}
+            {!loadingEvents && !errorEvents && (
             <ul className="space-y-4">
-              {upcomingEvents.map((ev, i) => (
-                <li key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
-                  <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 font-bold text-sm shrink-0">
-                    {ev.date.split(" ")[1].replace(",", "")}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-700 text-sm">{ev.title}</p>
-                    <p className="text-xs text-gray-400">{ev.date}</p>
-                  </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${tagColor[ev.tag]}`}>{ev.tag}</span>
-                </li>
-              ))}
+              {upcomingEvents.length > 0 ? (
+                upcomingEvents.map((ev, i) => (
+                  <li key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 font-bold text-sm shrink-0">
+                      {ev.date.split(" ")[1].replace(",", "")}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-700 text-sm">{ev.title}</p>
+                      <p className="text-xs text-gray-400">{ev.date}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${tagColor[ev.tag]}`}>{ev.tag}</span>
+                  </li>
+                ))
+              ) : (
+                <p className="text-center text-gray-500 text-sm py-8">No upcoming events.</p>
+              )}
             </ul>
+            )}
           </div>
         </div>
 
@@ -335,17 +389,49 @@ function Dashboard() {
           {/* Activity Feed */}
           <div className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2"><FaClock className="text-blue-500" /> Recent Activity</h2>
+            
+            {/* Loading State */}
+            {loadingActivities && (
+              <div className="flex flex-col items-center justify-center py-8">
+                <FaSpinner className="text-blue-500 text-2xl animate-spin mb-3" />
+                <p className="text-gray-600 text-sm">Loading activities...</p>
+              </div>
+            )}
+            
+            {/* Error State */}
+            {errorActivities && !loadingActivities && (
+              <div className="flex items-start gap-3 py-4">
+                <FaExclamationTriangle className="text-red-500 text-lg flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="text-red-600 text-sm mb-2">{errorActivities}</p>
+                  <button 
+                    onClick={loadRecentActivities}
+                    className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition text-xs font-medium"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Data */}
+            {!loadingActivities && !errorActivities && (
             <ul className="space-y-4">
-              {recentActivities.map((a, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="text-lg mt-0.5">{activityIcon[a.type]}</span>
-                  <div>
-                    <p className="text-sm text-gray-700">{a.text}</p>
-                    <p className="text-xs text-gray-400 mt-1">{a.time}</p>
-                  </div>
-                </li>
-              ))}
+              {recentActivities.length > 0 ? (
+                recentActivities.map((a, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="text-lg mt-0.5">{activityIcon[a.type]}</span>
+                    <div>
+                      <p className="text-sm text-gray-700">{a.text}</p>
+                      <p className="text-xs text-gray-400 mt-1">{a.time}</p>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <p className="text-center text-gray-500 text-sm py-8">No recent activities.</p>
+              )}
             </ul>
+            )}
           </div>
         </div>
 
