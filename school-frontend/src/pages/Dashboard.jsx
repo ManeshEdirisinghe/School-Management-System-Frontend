@@ -62,7 +62,6 @@ const activityIcon = {
   payment: <FaMoneyBillWave className="text-orange-500" />,
 };
 
-// ─── Component ───────────────────────────────────────────────
 function Dashboard() {
   const [stats, setStats] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -82,8 +81,7 @@ function Dashboard() {
       setLoadingStats(true);
       setErrorStats(null);
       const result = await api.get(endpoints.dashboard.getStats);
-      
-      // Transform API data to match component structure
+       to match component structure
       const statsData = [
         { 
           title: "Total Students", 
