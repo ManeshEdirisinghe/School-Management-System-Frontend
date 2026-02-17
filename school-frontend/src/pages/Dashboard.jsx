@@ -17,7 +17,6 @@ import {
 } from "react-icons/fa";
 import api, { endpoints } from "../services/api";
 
-// ─── Mock Data ───────────────────────────────────────────────
 const colorMap = {
   blue: { bg: "bg-blue-100", text: "text-blue-600", border: "border-blue-500" },
   green: { bg: "bg-green-100", text: "text-green-600", border: "border-green-500" },
@@ -81,7 +80,7 @@ function Dashboard() {
       setLoadingStats(true);
       setErrorStats(null);
       const result = await api.get(endpoints.dashboard.getStats);
-       to match component structure
+      
       const statsData = [
         { 
           title: "Total Students", 
